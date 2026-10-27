@@ -1,0 +1,15 @@
+{
+  "name": "better-ui",
+  "owner": {
+    "name": "Amir Soltanzade"
+  },
+  "description": "Design skills that make Claude build UI that looks designed, not generated.",
+  "plugins": [
+    {
+      "name": "better-ui",
+      "source": "./",
+      "description": "Stops AI from building generic UI. Landing pages built from real images, full-screen sections, 60-30-10 color, three-stage motion with eased scrolling, and measured checks at six screen sizes.",
+      "version": "0.1.0"
+    }
+  ]
+}

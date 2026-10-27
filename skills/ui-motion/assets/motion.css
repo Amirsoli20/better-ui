@@ -1,0 +1,105 @@
+/* ui-motion base: tokens, section scrolling, reveal, loops, hover effects, reduced motion.
+   Pair with motion.js. Put <script>document.documentElement.classList.add('js')</script> in <head>. */
+
+:root {
+  --motion-scale: 1;                      /* brand feel: .7 sharp, .9 efficient, 1-1.3 relaxed */
+  --dur-micro: calc(120ms * var(--motion-scale));
+  --dur-short: calc(220ms * var(--motion-scale));
+  --dur-long: calc(420ms * var(--motion-scale));
+  --dur-reveal: calc(800ms * var(--motion-scale));
+  --dur-open: calc(1200ms * var(--motion-scale));
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --ease-expo: cubic-bezier(.16, 1, .3, 1);
+  --ease-inout: cubic-bezier(.76, 0, .24, 1);
+  --ease-exit: cubic-bezier(.55, .055, .675, .19);
+  --rise-small: 12px;
+  --rise-block: 24px;
+  --stagger: 70ms;
+}
+
+/* ---------- Sections and scrolling ---------- */
+html { scroll-snap-type: y proximity; }               /* soft snap: used when wheel easing is not running */
+[data-section] { min-height: 100svh; scroll-snap-align: start; }
+[data-section][data-peek] { min-height: calc(100svh - 12vh); }
+[data-snap="off"] { scroll-snap-align: none; }
+html.is-eased { scroll-snap-type: none; scroll-behavior: auto; }  /* snap and wheel easing fight: snap off while easing is enabled */
+
+@media (prefers-reduced-motion: no-preference) {
+  html:not(.is-eased) { scroll-behavior: smooth; }    /* anchor links glide natively when JS easing is off */
+}
+
+/* Transition targets (motion.js writes transform/opacity/clip-path inline while scrolling) */
+html.is-eased [data-section] { transform-origin: 50% 100%; }
+
+/* ---------- Reveal once (L10 / E1) ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .js [data-reveal] {
+    opacity: 0;
+    transform: translateY(var(--rise-block));
+    transition: opacity var(--dur-reveal) var(--ease-expo), transform var(--dur-reveal) var(--ease-expo);
+    transition-delay: calc(var(--i, 0) * var(--stagger));
+  }
+  .js [data-reveal].is-in { opacity: 1; transform: none; }
+}
+
+/* ---------- Loops (stage 1). Put the class on the moving element, data-loop on its section ---------- */
+@keyframes ui-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes ui-wiggle { 0%, 100% { transform: rotate(-1.5deg); } 50% { transform: rotate(1.5deg); } }
+@keyframes ui-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+@keyframes ui-slow-zoom { from { transform: scale(1); } to { transform: scale(1.06); } }
+@keyframes ui-marquee { to { transform: translateX(-50%); } }
+@keyframes ui-drift { to { background-position: 100% 50%; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .loop-float { animation: ui-float 8s ease-in-out infinite; }
+  .loop-wiggle { animation: ui-wiggle 5s ease-in-out infinite; }
+  .loop-breathe { animation: ui-breathe 3.2s ease-in-out infinite; }
+  .loop-zoom { animation: ui-slow-zoom 20s linear infinite alternate; }
+  .loop-marquee { display: flex; width: max-content; animation: ui-marquee 40s linear infinite; }
+  .loop-drift { background-size: 200% 200%; animation: ui-drift 30s linear infinite alternate; }
+  .loop-float:nth-child(2n) { animation-delay: -3s; }
+  .loop-float:nth-child(3n) { animation-delay: -5s; }
+}
+/* paused when off screen, when the tab is hidden, on hover/focus of a marquee, or by the pause control */
+[data-loop]:not(.is-playing) *, [data-loop]:not(.is-playing),
+html.motion-paused *,
+.loop-marquee:hover, .loop-marquee:focus-within { animation-play-state: paused !important; }
+
+/* ---------- Mouse (stage 3). Only where hover exists ---------- */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .hover-lift { transition: transform var(--dur-short) var(--ease-out), box-shadow var(--dur-short) var(--ease-out); }
+  .hover-lift:hover { transform: translateY(-3px); }
+
+  .hover-fill { position: relative; overflow: clip; isolation: isolate; }
+  .hover-fill::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--fill, currentColor);
+    opacity: .12; transform: scaleX(0); transform-origin: left; transition: transform var(--dur-short) var(--ease-out); }
+  .hover-fill:hover::before { transform: scaleX(1); }
+  .hover-fill .arrow { display: inline-block; transition: transform var(--dur-short) var(--ease-out); }
+  .hover-fill:hover .arrow { transform: translateX(3px); }
+
+  .hover-underline { text-decoration: none; background: linear-gradient(currentColor 0 0) 0 100% / 0 1px no-repeat;
+    transition: background-size var(--dur-short) var(--ease-out); }
+  .hover-underline:hover { background-size: 100% 1px; }
+
+  [data-spotlight] { position: relative; isolation: isolate; }
+  [data-spotlight]::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: -1;
+    background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), var(--spot, rgb(255 255 255 / .14)), transparent 70%);
+    opacity: var(--spot-on, 0); transition: opacity var(--dur-long) var(--ease-out); }
+
+  [data-tilt] { transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform var(--dur-short) var(--ease-out); }
+}
+/* every hover effect also on keyboard focus */
+.hover-lift:focus-visible { transform: translateY(-3px); }
+.hover-underline:focus-visible { background-size: 100% 1px; }
+
+/* ---------- Feedback ---------- */
+a, button { transition: color var(--dur-micro) ease, background-color var(--dur-micro) ease, border-color var(--dur-micro) ease, opacity var(--dur-micro) ease, transform var(--dur-micro) var(--ease-out); }
+button:active, .btn:active { transform: scale(.97); }
+:focus-visible { transition: none; }   /* focus ring appears instantly */
+
+/* ---------- Reduced motion: the finished, still page ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+  [data-section] { transform: none !important; opacity: 1 !important; clip-path: none !important; }
+  button:active, .btn:active { transform: none; }
+}
